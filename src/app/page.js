@@ -1,69 +1,138 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client'
+
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase'
+import ProductCard from '@/components/ProductCard'
+import CategorySection from '@/components/CategorySection'
+import HeroBanner from '@/components/HeroBanner'
+import EmailSignup from '@/components/EmailSignup'
+import Testimonials from '@/components/Testimonials'
+import ScrollBanner from '@/components/ScrollBanner'
+import { useInView } from 'react-intersection-observer'
+import Spinner from '@/components/Spinner'
 
 export default function Home() {
+  const [products, setProducts] = useState([])
+  const [categories, setCategories] = useState([])
+  const [categoryCounts, setCategoryCounts] = useState({})
+  const [loading, setLoading] = useState(true)
+
+  const [featuredRef, featuredInView] = useInView({ triggerOnce: true, threshold: 0.1 })
+
+  useEffect(() => {
+    async function fetchData() {
+      const supabase = createClient()
+      
+      const { data: productData } = await supabase
+        .from('products')
+        .select('*')
+        .eq('is_active', true)
+      
+      const { data: categoryData } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('name')
+      
+      if (productData) {
+        setProducts(productData)
+        const counts = {}
+        productData.forEach(p => {
+          const cat = p.category?.toLowerCase() || 'uncategorized'
+          counts[cat] = (counts[cat] || 0) + 1
+        })
+        setCategoryCounts(counts)
+      }
+      
+      if (categoryData) setCategories(categoryData)
+      setLoading(false)
+    }
+    fetchData()
+  }, [])
+
+  const getProductsByCategory = (slug) => {
+    return products.filter(p => p.category?.toLowerCase() === slug.toLowerCase())
+  }
+
+  const activeCategories = categories.filter(cat => {
+    const count = categoryCounts[cat.slug] || 0
+    return count >= 2
+  })
+
+  const getRandomProducts = (arr, count = 8) => {
+    const shuffled = [...arr].sort(() => 0.5 - Math.random())
+    return shuffled.slice(0, count)
+  }
+
+  const featuredProducts = getRandomProducts(products, 8)
+  const directions = ['left', 'right', 'left', 'right', 'left']
+
+  const midPoint = Math.ceil(activeCategories.length / 2)
+  const firstHalf = activeCategories.slice(0, midPoint)
+  const secondHalf = activeCategories.slice(midPoint)
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.js</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+    <main>
+      <HeroBanner />
+      
+      {/* Featured Products */}
+      <section ref={featuredRef} className={`featured scroll-section container ${featuredInView ? 'visible' : ''}`}>
+        <h2>Featured Picks</h2>
+        {loading ? (
+          <Spinner />
+        ) : (
+          <div className="product-grid">
+            {featuredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* First Half of Scrolling Categories */}
+      {!loading && firstHalf.length > 0 && (
+        <>
+          {firstHalf.map((category, index) => {
+            const catProducts = getProductsByCategory(category.slug)
+            return (
+              <CategorySection
+                key={category.id}
+                title={category.name}
+                icon={category.icon || '📦'}
+                products={catProducts}
+                direction={directions[index % directions.length]}
+                backgroundImage={category.background_image}
+                slug={category.slug}
+              />
+            )
+          })}
+        </>
+      )}
+
+      <ScrollBanner />
+
+      {/* Second Half of Scrolling Categories */}
+      {!loading && secondHalf.length > 0 && (
+        <>
+          {secondHalf.map((category, index) => {
+            const catProducts = getProductsByCategory(category.slug)
+            return (
+              <CategorySection
+                key={category.id}
+                title={category.name}
+                icon={category.icon || '📦'}
+                products={catProducts}
+                direction={directions[(index + midPoint) % directions.length]}
+                backgroundImage={category.background_image}
+                slug={category.slug}
+              />
+            )
+          })}
+        </>
+      )}
+
+      <EmailSignup />
+      <Testimonials />
+    </main>
+  )
 }

@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sommy Wears — Premium Men's Fashion Store
 
-## Getting Started
+A full-featured e-commerce platform built for **Sommy Wears**, a boutique store specializing in premium men's fashion. This application handles everything from product browsing to order management.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Product Catalog** — Browse products by category with scrolling image galleries
+- **Shopping Cart** — Add, remove, and update quantities with a draggable floating cart
+- **Guest Checkout** — No account required to place an order
+- **Bank Transfer Payments** — Manual payment system with WhatsApp integration
+- **Order Management** — Customers receive email confirmations and status updates
+- **Admin Dashboard** — Manage products, orders, and customer reviews
+- **Wishlist** — Save favorite items for later
+- **Responsive Design** — Works on desktop, tablet, and mobile
+- **Dark Theme** — Cyberpunk-inspired design with gold accents
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+##  Tech Stack
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+- **Frontend:** Next.js 15+ (App Router), React, JavaScript
+- **Backend:** Supabase (PostgreSQL, Authentication, Storage)
+- **Email:** Nodemailer (Gmail) + EmailJS
+- **Styling:** Custom CSS with dark/light theme support
+- **Deployment:** Netlify
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Installation
 
-## Learn More
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Dante-914/Sommy-Wears
+   cd sommywears
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+##  Credits
+- **Developer:** Daniel Udensi
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Client:** Sommy Wears Boutique
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Images:** Unsplash
