@@ -201,7 +201,7 @@ a {
 }
 
 /* ============================================
-   MOBILE NAV - STACK UNDER HEADER
+   MOBILE NAV - STACK UNDER HEADER (FIXED)
    ============================================ */
 @media (max-width: 768px) {
   .header {
@@ -210,6 +210,7 @@ a {
 
   .header-inner {
     gap: 4px;
+    flex-wrap: wrap;
   }
 
   .header-left {
@@ -220,16 +221,17 @@ a {
     font-size: 20px;
   }
 
-  /* Nav stacks under header */
+  /* === FORCE NAV TO STACK === */
   .nav {
     display: flex !important;
-    gap: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
     width: 100%;
     justify-content: center;
     padding: 8px 0 2px 0;
     border-top: 1px solid var(--border-color);
     margin-top: 4px;
-    flex-wrap: wrap;
+    order: 3; /* Ensures it goes to the bottom */
   }
 
   .nav a {
@@ -237,13 +239,14 @@ a {
     padding: 4px 8px;
   }
 
-  .nav a::after {
-    bottom: -2px;
-  }
-
   .cart-link {
     font-size: 18px;
     margin-left: 0;
+    order: 2;
+  }
+
+  .header-left {
+    order: 1;
   }
 }
 
