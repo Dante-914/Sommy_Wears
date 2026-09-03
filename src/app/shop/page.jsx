@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
@@ -7,29 +8,29 @@ import ProductCard from '@/components/ProductCard'
 import Link from 'next/link'
 import Spinner from '@/components/Spinner'
 
-export default function ShopPage() {
+// ============================================
+// SHOP CONTENT (uses useSearchParams)
+// ============================================
+function ShopContent() {
   const searchParams = useSearchParams()
   const categoryFilter = searchParams.get('category')
   const [products, setProducts] = useState([])
-  const [loading, setLoading] = useState(true)
   const [categories, setCategories] = useState([])
+  const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {
     async function fetchProducts() {
       setLoading(true)
       
-      // Build query
       let query = supabase.from('products').select('*').eq('is_active', true)
       
-      // Apply category filter if present
       if (categoryFilter) {
         query = query.ilike('category', categoryFilter)
       }
       
       const { data } = await query
       
-      // Also fetch categories for the filter bar
       const { data: catData } = await supabase
         .from('products')
         .select('category')
@@ -37,7 +38,6 @@ export default function ShopPage() {
 
       setProducts(data || [])
       
-      // Get unique categories
       const uniqueCats = [...new Set(catData?.map(p => p.category).filter(Boolean))]
       setCategories(uniqueCats)
       setLoading(false)
@@ -54,8 +54,12 @@ export default function ShopPage() {
     }).format(price)
   }
 
+  if (loading) {
+    return <Spinner />
+  }
+
   return (
-    <main className="container shop-page">
+    <>
       <h1>
         {categoryFilter 
           ? `${categoryFilter.charAt(0).toUpperCase() + categoryFilter.slice(1)}` 
@@ -63,7 +67,6 @@ export default function ShopPage() {
         }
       </h1>
 
-      {/* Category Filter Bar */}
       <div className="filter-bar">
         <Link 
           href="/shop" 
@@ -82,9 +85,7 @@ export default function ShopPage() {
         ))}
       </div>
 
-      {loading ? (
-        <Spinner />
-      ) : products.length === 0 ? (
+      {products.length === 0 ? (
         <p className="no-products">No products found in this category.</p>
       ) : (
         <div className="product-grid">
@@ -93,6 +94,19 @@ export default function ShopPage() {
           ))}
         </div>
       )}
+    </>
+  )
+}
+
+// ============================================
+// MAIN SHOP PAGE (with Suspense)
+// ============================================
+export default function ShopPage() {
+  return (
+    <main className="container shop-page">
+      <Suspense fallback={<Spinner />}>
+        <ShopContent />
+      </Suspense>
     </main>
   )
 }
