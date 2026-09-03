@@ -14,6 +14,7 @@ export default function FloatingCart() {
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [isMounted, setIsMounted] = useState(false)
+  const [hasDragged, setHasDragged] = useState(false)
   const cartRef = useRef(null)
   const pathname = usePathname()
 
@@ -43,7 +44,6 @@ export default function FloatingCart() {
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (isOpen && cartRef.current && !cartRef.current.contains(e.target)) {
-        if (e.target.closest('.cart-toggle')) return
         setIsOpen(false)
       }
     }
@@ -77,29 +77,33 @@ export default function FloatingCart() {
     setIsHidden(true)
   }
 
-  // ===== DRAG HANDLERS (ENTIRE CART IS DRAGGABLE) =====
-  const handleDragStart = (e) => {
-    // Don't drag if clicking on interactive elements
-    if (
-      e.target.closest('.cart-toggle') ||
-      e.target.closest('.cart-content') ||
-      e.target.closest('button') ||
-      e.target.closest('a') ||
-      e.target.closest('.qty-btn-small') ||
-      e.target.closest('.remove-item-btn') ||
-      e.target.closest('.cart-checkout-btn')
-    ) {
-      return
-    }
+  // ===== DRAG HANDLERS =====
+  const handleMouseDown = (e) => {
+    // Only handle drag on the main cart button, not the dropdown content
+    if (e.target.closest('.cart-content')) return
     
+    setHasDragged(false)
     setIsDragging(true)
     const rect = cartRef.current?.getBoundingClientRect()
     if (rect) {
-      const clientX = e.clientX || e.touches?.[0]?.clientX || 0
-      const clientY = e.clientY || e.touches?.[0]?.clientY || 0
       setDragOffset({
-        x: clientX - rect.left,
-        y: clientY - rect.top,
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      })
+    }
+  }
+
+  const handleTouchStart = (e) => {
+    if (e.target.closest('.cart-content')) return
+    
+    setHasDragged(false)
+    setIsDragging(true)
+    const touch = e.touches[0]
+    const rect = cartRef.current?.getBoundingClientRect()
+    if (rect && touch) {
+      setDragOffset({
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top,
       })
     }
   }
@@ -108,6 +112,7 @@ export default function FloatingCart() {
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (!isDragging) return
+      setHasDragged(true)
       let newX = e.clientX - dragOffset.x
       let newY = e.clientY - dragOffset.y
       const maxX = window.innerWidth - 80
@@ -136,6 +141,7 @@ export default function FloatingCart() {
   useEffect(() => {
     const handleTouchMove = (e) => {
       if (!isDragging) return
+      setHasDragged(true)
       const touch = e.touches[0]
       if (!touch) return
       let newX = touch.clientX - dragOffset.x
@@ -162,6 +168,16 @@ export default function FloatingCart() {
     }
   }, [isDragging, dragOffset])
 
+  // ===== HANDLE TOGGLE CLICK =====
+  const handleToggle = () => {
+    // Only toggle if the user didn't drag
+    if (!hasDragged) {
+      setIsOpen(!isOpen)
+    }
+    // Reset for next interaction
+    setHasDragged(false)
+  }
+
   if (totalItems === 0 || isHidden) {
     return null
   }
@@ -186,21 +202,24 @@ export default function FloatingCart() {
         zIndex: 9999,
         cursor: isDragging ? 'grabbing' : 'grab',
       }}
-      onMouseDown={handleDragStart}
-      onTouchStart={handleDragStart}
+      onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
     >
-      {/* Drag handle indicator (visible on hover) */}
+      {/* Drag handle indicator */}
       <div className="drag-handle">⋮⋮</div>
 
-      <button
+      {/* Main cart toggle button */}
+      <div
         className="cart-toggle"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Toggle cart"
+        onClick={handleToggle}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => e.key === 'Enter' && handleToggle()}
       >
         <span className="cart-icon">🛒</span>
         {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
         <span className="cart-arrow">{isOpen ? '▲' : '▼'}</span>
-      </button>
+      </div>
 
       {isOpen && (
         <div className="cart-content">
