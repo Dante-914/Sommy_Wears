@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import toast from 'react-hot-toast'
+import { WhatsAppIcon, PhoneIcon } from '@/components/WhatsAppIcon'
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -16,17 +17,46 @@ export default function ContactPage() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
-    
-    // For now, just show a success message
-    // You can later integrate with an email service
-    setTimeout(() => {
-      toast.success('Message sent! We\'ll get back to you soon.')
-      setFormData({ name: '', email: '', message: '' })
-      setLoading(false)
-    }, 1000)
+
+    try {
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'iamsommy1@gmail.com',
+          subject: `New Contact Message from ${formData.name}`,
+          html: `
+            <h2>New Contact Form Message</h2>
+            <p><strong>Name:</strong> ${formData.name}</p>
+            <p><strong>Email:</strong> ${formData.email}</p>
+            <p><strong>Message:</strong></p>
+            <p>${formData.message.replace(/\n/g, '<br>')}</p>
+            <hr>
+            <p>Sent from Sommy Wears Contact Form</p>
+          `
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        toast.success('Message sent! We\'ll get back to you soon.')
+        setFormData({ name: '', email: '', message: '' })
+      } else {
+        toast.error('Failed to send message. Please try again.')
+        console.error('Email error:', result.error)
+      }
+    } catch (error) {
+      console.error('Error sending message:', error)
+      toast.error('Something went wrong. Please try again.')
+    }
+
+    setLoading(false)
   }
 
   return (
@@ -40,30 +70,28 @@ export default function ContactPage() {
           
           <div className="contact-details">
             <div className="contact-item">
-              <span className="contact-icon">📞</span>
               <div>
                 <strong>Phone</strong>
-                <a href="tel:+2348162151494">+234 816 215 1494</a>
-              </div>
-            </div>
-            <div className="contact-item">
-              <span className="contact-icon">💬</span>
-              <div>
-                <strong>WhatsApp</strong>
-                <a href="https://wa.me/2348162151494" target="_blank" rel="noopener noreferrer">
-                  +234 816 215 1494
+                <a href="tel:+2348162151494" className="contact-link">
+                  <PhoneIcon size={18} color="#25D366" /> +234 816 215 1494
                 </a>
               </div>
             </div>
             <div className="contact-item">
-              <span className="contact-icon">✉️</span>
+              <div>
+                <strong>WhatsApp</strong>
+                <a href="https://wa.me/2348162151494" target="_blank" rel="noopener noreferrer">
+                  <WhatsAppIcon size={18} color="#25D366" /> Chat with us
+                </a>
+              </div>
+            </div>
+            <div className="contact-item">
               <div>
                 <strong>Email</strong>
                 <a href="mailto:iamsommy1@gmail.com">iamsommy1@gmail.com</a>
               </div>
             </div>
             <div className="contact-item">
-              <span className="contact-icon">📍</span>
               <div>
                 <strong>Location</strong>
                 <span>Marian by Ediba, beside Unity Bank, Calabar Municipal, Cross River State</span>

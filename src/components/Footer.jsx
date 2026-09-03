@@ -4,6 +4,7 @@
 import Link from 'next/link'
 import WhatsAppIcon from '@/components/WhatsAppIcon'
 import { InstagramIcon } from '@/components/WhatsAppIcon'
+import { PhoneIcon } from '@/components/WhatsAppIcon'
 
 export default function Footer() {
   return (
@@ -22,8 +23,13 @@ export default function Footer() {
           </div>
           <div className="footer-col">
             <h4>Contact</h4>
-            <a href="tel:+2348162151494">+234 816 215 1494</a>
-            <a href="mailto:iamsommy1@gmail.com">iamsommy1@gmail.com</a>
+            <a href="tel:+2348162151494" className="contact-link">
+              <PhoneIcon size={18} color="#25D366" />
+              +234 816 215 1494
+            </a>
+            <a href="https://wa.me/2348162151494" target="_blank" rel="noopener noreferrer">
+              <WhatsAppIcon size={18} color="#25D366" /> WhatsApp
+            </a>
             <span>Marian by Ediba, beside Unity Bank, Calabar Municipal, Cross River State</span>
           </div>
           <div className="footer-col">
