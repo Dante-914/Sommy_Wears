@@ -26,7 +26,7 @@ const sendEmail = async (to, subject, html) => {
     const result = await response.json()
 
     if (result.success) {
-      console.log('✅ Email sent:', result.messageId)
+      console.log('Email sent:', result.messageId)
       return { success: true }
     } else {
       console.error('❌ Email error:', result.error)
@@ -67,7 +67,7 @@ export const sendAdminOrderNotification = async (orderData) => {
     <p><strong>Total:</strong> ₦${orderData.total.toLocaleString()}</p>
     <p><strong>Status:</strong> Pending ⏳</p>
     <hr>
-    <p><a href="https://sommywears.ct/admin/dashboard">📊 View in Dashboard</a></p>
+    <p><a href="https://sommy-wears.netlify.app/admin/dashboard">📊 View in Dashboard</a></p>
     <p>Sommy Wears — Premium Men's Fashion</p>
   `
 
@@ -95,7 +95,7 @@ export const sendCustomerOrderConfirmation = async (orderData) => {
   const html = `
     <h1>Thank You, ${orderData.customer_name}! ✅</h1>
     <p>Your order <strong>#${orderData.order_number}</strong> has been confirmed.</p>
-    <h3> Order Summary</h3>
+    <h3>Order Summary</h3>
     <pre>${itemsText}</pre>
     <p><strong>Total:</strong> ₦${orderData.total.toLocaleString()}</p>
     <h3>Payment Instructions</h3>
@@ -176,12 +176,15 @@ export const sendOrderStatusUpdate = async (orderData, newStatus) => {
       break
 
     case 'delivered':
+      // Build the review link properly
+      const reviewLink = `https://sommy-wears.netlify.app/review?order=${orderData.order_number}&name=${encodeURIComponent(orderData.customer_name)}&email=${encodeURIComponent(orderData.customer_email)}`
+      
       subject = `Order Delivered #${orderData.order_number}`
       body = `
-        <h1>Order Delivered!</h1>
+        <h1>📦 Order Delivered!</h1>
         <p>Your order <strong>#${orderData.order_number}</strong> has been delivered.</p>
         <p>We hope you love your new items!</p>
-        <p>⭐ <a href="https://sommywears.ct/review?order=${orderData.order_number}&name=${encodeURIComponent(orderData.customer_name)}&email=${orderData.customer_email}">Leave a Review</a></p>
+        <p>⭐ <a href="${reviewLink}">Leave a Review</a></p>
         <p>Thank you for shopping with Sommy Wears! ❤️</p>
         <hr>
         <p>💬 Questions? Chat with us on WhatsApp:<a href="https://wa.me/2348162151494" style="display:inline-block; background:#25D366; color:white; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:bold; font-size:16px; display:flex; align-items:center; gap:8px;">
