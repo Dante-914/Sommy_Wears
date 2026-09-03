@@ -1001,13 +1001,37 @@ a {
   position: relative;
   background: url('https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1400&auto=format') center/cover no-repeat;
   background-attachment: fixed;
-  min-height: 400px;
+  min-height: 480px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 30px 0;
+  margin: 40px 0;
   border-radius: var(--radius);
   overflow: hidden;
+  isolation: isolate;
+}
+
+/* Fixed background image using pseudo-element */
+.brand-banner-fixed-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1400&auto=format') center/cover no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
+  z-index: 0;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Fallback for mobile where fixed background doesn't work */
+@supports (-webkit-touch-callout: none) {
+  .brand-banner-fixed-bg {
+    background-attachment: scroll;
+    background-position: center center;
+  }
 }
 
 .brand-banner-overlay {
@@ -1016,6 +1040,7 @@ a {
   padding: 50px 0;
   backdrop-filter: blur(3px);
   text-align: center;
+  position: relative;
 }
 
 .brand-banner-content {
@@ -1039,7 +1064,7 @@ a {
 }
 
 .brand-banner-title {
-  font-size: 36px;
+  font-size: 38px;
   font-weight: 800;
   margin-bottom: 12px;
   line-height: 1.2;
@@ -1056,7 +1081,7 @@ a {
 .brand-banner-subtitle {
   font-size: 17px;
   color: rgba(255, 255, 255, 0.85);
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   line-height: 1.6;
 }
 
@@ -1175,6 +1200,54 @@ a {
   transform: scale(1.04);
   box-shadow: 0 8px 30px rgba(255, 215, 0, 0.35);
 }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .brand-banner {
+    min-height: 340px;
+    margin: 20px 0;
+  }
+
+  .brand-banner-fixed-bg {
+    background-attachment: scroll !important;
+  }
+
+  .brand-banner-overlay {
+    padding: 40px 0;
+  }
+
+  .brand-banner-title {
+    font-size: 28px;
+  }
+
+  .brand-banner-subtitle {
+    font-size: 15px;
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-banner {
+    min-height: 280px;
+    border-radius: 8px;
+    margin: 16px 0;
+  }
+
+  .brand-banner-title {
+    font-size: 22px;
+  }
+
+  .brand-banner-tag {
+    font-size: 11px;
+    padding: 4px 14px;
+  }
+
+  .btn-brand-banner {
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+}
+
 
 /* ============================================
    SHOP PAGE
