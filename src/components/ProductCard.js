@@ -39,7 +39,7 @@ export default function ProductCard({ product }) {
         <div className="product-info">
           <h3 className="product-name">{product.name}</h3>
           <span className={`stock-badge ${product.stock > 0 ? 'in-stock' : 'out-of-stock'}`}>
-            {product.stock > 0 ? '✅ In Stock' : '❌ Out of Stock'}
+            {product.stock > 0 ? 'In Stock' : '❌ Out of Stock'}
           </span>
           <div className="product-price">
             {product.sale_price ? (

@@ -9,7 +9,7 @@ import { usePathname } from 'next/navigation'
 export default function FloatingCart() {
   const { cart, getTotalItems, getTotalPrice, removeFromCart, updateQuantity } = useCart()
   const [isOpen, setIsOpen] = useState(false)
-  const [isHidden, setIsHidden] = useState(false) // ← NEW: Force hide
+  const [isHidden, setIsHidden] = useState(false)
   const [position, setPosition] = useState({ x: 20, y: 80 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
@@ -20,10 +20,9 @@ export default function FloatingCart() {
   const totalItems = getTotalItems()
   const totalPrice = getTotalPrice()
 
-  // ===== CLOSE CART ON NAVIGATION (including checkout) =====
+  // ===== CLOSE CART ON NAVIGATION =====
   useEffect(() => {
     setIsOpen(false)
-    // Force hide on checkout page
     if (pathname === '/checkout') {
       setIsHidden(true)
     } else {
@@ -75,22 +74,37 @@ export default function FloatingCart() {
   // ===== HANDLE CHECKOUT =====
   const handleCheckout = () => {
     setIsOpen(false)
-    setIsHidden(true) // Force hide when going to checkout
+    setIsHidden(true)
   }
 
-  // Drag handlers
-  const handleMouseDown = (e) => {
-    if (e.target.closest('.cart-content') || e.target.closest('.cart-toggle')) return
+  // ===== DRAG HANDLERS (ENTIRE CART IS DRAGGABLE) =====
+  const handleDragStart = (e) => {
+    // Don't drag if clicking on interactive elements
+    if (
+      e.target.closest('.cart-toggle') ||
+      e.target.closest('.cart-content') ||
+      e.target.closest('button') ||
+      e.target.closest('a') ||
+      e.target.closest('.qty-btn-small') ||
+      e.target.closest('.remove-item-btn') ||
+      e.target.closest('.cart-checkout-btn')
+    ) {
+      return
+    }
+    
     setIsDragging(true)
     const rect = cartRef.current?.getBoundingClientRect()
     if (rect) {
+      const clientX = e.clientX || e.touches?.[0]?.clientX || 0
+      const clientY = e.clientY || e.touches?.[0]?.clientY || 0
       setDragOffset({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
+        x: clientX - rect.left,
+        y: clientY - rect.top,
       })
     }
   }
 
+  // Mouse drag
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (!isDragging) return
@@ -118,37 +132,36 @@ export default function FloatingCart() {
     }
   }, [isDragging, dragOffset])
 
-  // Touch events
-  const handleTouchStart = (e) => {
-    if (e.target.closest('.cart-content') || e.target.closest('.cart-toggle')) return
-    setIsDragging(true)
-    const touch = e.touches[0]
-    const rect = cartRef.current?.getBoundingClientRect()
-    if (rect) {
-      setDragOffset({
-        x: touch.clientX - rect.left,
-        y: touch.clientY - rect.top,
-      })
+  // Touch drag
+  useEffect(() => {
+    const handleTouchMove = (e) => {
+      if (!isDragging) return
+      const touch = e.touches[0]
+      if (!touch) return
+      let newX = touch.clientX - dragOffset.x
+      let newY = touch.clientY - dragOffset.y
+      const maxX = window.innerWidth - 80
+      const maxY = window.innerHeight - 80
+      newX = Math.max(0, Math.min(newX, maxX))
+      newY = Math.max(0, Math.min(newY, maxY))
+      setPosition({ x: newX, y: newY })
     }
-  }
 
-  const handleTouchMove = (e) => {
-    if (!isDragging) return
-    const touch = e.touches[0]
-    let newX = touch.clientX - dragOffset.x
-    let newY = touch.clientY - dragOffset.y
-    const maxX = window.innerWidth - 80
-    const maxY = window.innerHeight - 80
-    newX = Math.max(0, Math.min(newX, maxX))
-    newY = Math.max(0, Math.min(newY, maxY))
-    setPosition({ x: newX, y: newY })
-  }
+    const handleTouchEnd = () => {
+      setIsDragging(false)
+    }
 
-  const handleTouchEnd = () => {
-    setIsDragging(false)
-  }
+    if (isDragging) {
+      window.addEventListener('touchmove', handleTouchMove, { passive: false })
+      window.addEventListener('touchend', handleTouchEnd)
+    }
 
-  // ===== DON'T RENDER IF HIDDEN OR EMPTY =====
+    return () => {
+      window.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [isDragging, dragOffset])
+
   if (totalItems === 0 || isHidden) {
     return null
   }
@@ -173,11 +186,10 @@ export default function FloatingCart() {
         zIndex: 9999,
         cursor: isDragging ? 'grabbing' : 'grab',
       }}
-      onMouseDown={handleMouseDown}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      onMouseDown={handleDragStart}
+      onTouchStart={handleDragStart}
     >
+      {/* Drag handle indicator (visible on hover) */}
       <div className="drag-handle">⋮⋮</div>
 
       <button
