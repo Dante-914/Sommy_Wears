@@ -5,9 +5,10 @@ import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { useCart } from '@/context/CartContext'
 import ProductCard from '@/components/ProductCard'
+import WishlistButton from '@/components/WishlistButton'
+import Spinner from '@/components/Spinner'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
-import Spinner from '@/components/Spinner'
 
 export default function ProductPage() {
   const params = useParams()
@@ -29,7 +30,6 @@ export default function ProductPage() {
       if (productData) {
         setProduct(productData)
 
-        // Fetch related products (same category, exclude current)
         const { data: related } = await supabase
           .from('products')
           .select('*')
@@ -55,9 +55,15 @@ export default function ProductPage() {
 
   const handleAddToCart = () => {
     if (!product) return
+    if (product.stock <= 0) {
+      toast.error('Sorry, this item is out of stock!')
+      return
+    }
     addToCart(product, 1)
     toast.success(`${product.name} added to cart! 🛒`)
   }
+
+  const isInStock = product?.stock > 0
 
   if (loading) {
     return (
@@ -84,37 +90,57 @@ export default function ProductPage() {
       <div className="product-details">
         <div className="product-image-container">
           <img src={imageUrl} alt={product.name} className="product-main-image" />
+          {!isInStock && (
+            <div className="product-out-of-stock-badge">
+              <span>Out of Stock</span>
+            </div>
+          )}
         </div>
         <div className="product-info-container">
-          <h1>{product.name}</h1>
-          <p className={`stock-badge-large ${product.stock > 0 ? 'in-stock' : 'out-of-stock'}`}>
-            {product.stock > 0 ? `✅ In Stock (${product.stock} available)` : '❌ Out of Stock'}
-          </p>
+          <div className="product-title-row">
+            <h1>{product.name}</h1>
+            <WishlistButton product={product} />
+          </div>
           <p className="product-category">{product.category}</p>
           <div className="product-price-large">
-            {product.sale_price ? (
+            {isInStock ? (
               <>
-                <span className="sale-price-large">{formatPrice(product.sale_price)}</span>
-                <span className="original-price-large">{formatPrice(product.price)}</span>
+                {product.sale_price ? (
+                  <>
+                    <span className="sale-price-large">{formatPrice(product.sale_price)}</span>
+                    <span className="original-price-large">{formatPrice(product.price)}</span>
+                  </>
+                ) : (
+                  <span>{formatPrice(product.price)}</span>
+                )}
               </>
             ) : (
-              <span>{formatPrice(product.price)}</span>
+              <span className="out-of-stock-price-large">
+                {formatPrice(product.price)} — Out of Stock
+              </span>
             )}
           </div>
           <p className="product-description">{product.description}</p>
           <button 
             onClick={handleAddToCart} 
-            className="btn-primary add-to-cart-btn"
+            className={`btn-primary add-to-cart-btn ${!isInStock ? 'disabled' : ''}`}
+            disabled={!isInStock}
+            style={{ width: '100%' }}
           >
-            Add to Cart
+            {isInStock ? 'Add to Cart' : 'Out of Stock'}
           </button>
+          {!isInStock && (
+            <p className="out-of-stock-notice">
+              This item is currently out of stock. Check back soon!
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Related Products Section */}
+      {/* Related Products */}
       {relatedProducts && relatedProducts.length > 0 && (
         <section className="related-products">
-          <h2>More {product.category} You Might Like</h2>
+          <h2>More {product.category}s You Might Like</h2>
           <div className="product-grid">
             {relatedProducts.map((related) => (
               <ProductCard key={related.id} product={related} />

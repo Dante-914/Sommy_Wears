@@ -3,14 +3,14 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useCart } from '@/context/CartContext'
-import Sidebar from '@/components/Sidebar'
 import { useWishlist } from '@/context/WishlistContext'
+import Sidebar from '@/components/Sidebar'
 
 export default function Header() {
   const { getTotalItems } = useCart()
+  const { wishlistCount } = useWishlist()
   const itemCount = getTotalItems()
   const [scrolled, setScrolled] = useState(false)
-  const { wishlistCount } = useWishlist()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,27 +22,28 @@ export default function Header() {
 
   return (
     <header className={`header ${scrolled ? 'scrolled' : ''}`}>
-      <div className="container header-inner">
-        <div className="header-left">
-          {/* Sidebar is now self-contained — it renders its own hamburger button */}
-          <Sidebar categories={[]} productCounts={{}} />
-          <Link href="/" className="logo">Sommy Wears</Link>
+      <div className="container">
+        {/* Row 1: Logo + Hamburger + Cart */}
+        <div className="header-inner">
+          <div className="header-left">
+            <Sidebar categories={[]} productCounts={{}} />
+            <Link href="/" className="logo">Sommy Wears</Link>
+          </div>
+          <Link href="/cart" className="cart-link">
+            🛒 {itemCount > 0 && <span className="cart-count">{itemCount}</span>}
+          </Link>
         </div>
 
-        {/* Desktop Navigation */}
-        <nav className="nav-desktop">
-          <Link href="/">Home</Link>
-          <Link href="/shop">Shop</Link>
-          <Link href="/about">About</Link>
-          <Link href="/contact">Contact</Link>
-          <Link href="/wishlist" className="wishlist-link">
-          Wishlist {wishlistCount > 0 && <span className="wishlist-count">{wishlistCount}</span>}
+        {/* Row 2: Navigation Bar */}
+        <nav className="nav-bar">
+          <Link href="/" className="nav-link">Home</Link>
+          <Link href="/shop" className="nav-link">Shop</Link>
+          <Link href="/about" className="nav-link">About</Link>
+          <Link href="/contact" className="nav-link">Contact</Link>
+          <Link href="/wishlist" className="nav-link wishlist-link">
+            ❤️ {wishlistCount > 0 && <span className="wishlist-count">{wishlistCount}</span>}
           </Link>
         </nav>
-
-        <Link href="/cart" className="cart-link">
-          🛒 {itemCount > 0 && <span className="cart-count">{itemCount}</span>}
-        </Link>
       </div>
     </header>
   )
