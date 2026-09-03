@@ -4,20 +4,54 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useCart } from '@/context/CartContext'
 import { createPortal } from 'react-dom'
+import { usePathname } from 'next/navigation'
 
 export default function FloatingCart() {
   const { cart, getTotalItems, getTotalPrice, removeFromCart, updateQuantity } = useCart()
   const [isOpen, setIsOpen] = useState(false)
+  const [isHidden, setIsHidden] = useState(false) // ← NEW: Force hide
   const [position, setPosition] = useState({ x: 20, y: 80 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [isMounted, setIsMounted] = useState(false)
   const cartRef = useRef(null)
+  const pathname = usePathname()
 
   const totalItems = getTotalItems()
   const totalPrice = getTotalPrice()
 
-  // Handle mounting for portal
+  // ===== CLOSE CART ON NAVIGATION (including checkout) =====
+  useEffect(() => {
+    setIsOpen(false)
+    // Force hide on checkout page
+    if (pathname === '/checkout') {
+      setIsHidden(true)
+    } else {
+      setIsHidden(false)
+    }
+  }, [pathname])
+
+  // ===== CLOSE CART ON ESC KEY =====
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') setIsOpen(false)
+    }
+    window.addEventListener('keydown', handleEsc)
+    return () => window.removeEventListener('keydown', handleEsc)
+  }, [])
+
+  // ===== CLOSE CART ON CLICK OUTSIDE =====
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (isOpen && cartRef.current && !cartRef.current.contains(e.target)) {
+        if (e.target.closest('.cart-toggle')) return
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isOpen])
+
   useEffect(() => {
     setIsMounted(true)
   }, [])
@@ -28,20 +62,23 @@ export default function FloatingCart() {
     if (saved) {
       try {
         setPosition(JSON.parse(saved))
-      } catch (e) {
-        // ignore
-      }
+      } catch (e) {}
     }
   }, [])
 
-  // Save position when changed
   useEffect(() => {
-    if (position.x !== 20 || position.y !== 80) {
+    if (isMounted && (position.x !== 20 || position.y !== 80)) {
       localStorage.setItem('floatingCartPosition', JSON.stringify(position))
     }
-  }, [position])
+  }, [position, isMounted])
 
-  // Handle drag start
+  // ===== HANDLE CHECKOUT =====
+  const handleCheckout = () => {
+    setIsOpen(false)
+    setIsHidden(true) // Force hide when going to checkout
+  }
+
+  // Drag handlers
   const handleMouseDown = (e) => {
     if (e.target.closest('.cart-content') || e.target.closest('.cart-toggle')) return
     setIsDragging(true)
@@ -54,19 +91,15 @@ export default function FloatingCart() {
     }
   }
 
-  // Handle drag move
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (!isDragging) return
       let newX = e.clientX - dragOffset.x
       let newY = e.clientY - dragOffset.y
-
-      // Keep within viewport bounds
       const maxX = window.innerWidth - 80
       const maxY = window.innerHeight - 80
       newX = Math.max(0, Math.min(newX, maxX))
       newY = Math.max(0, Math.min(newY, maxY))
-
       setPosition({ x: newX, y: newY })
     }
 
@@ -85,7 +118,7 @@ export default function FloatingCart() {
     }
   }, [isDragging, dragOffset])
 
-  // Touch events for mobile
+  // Touch events
   const handleTouchStart = (e) => {
     if (e.target.closest('.cart-content') || e.target.closest('.cart-toggle')) return
     setIsDragging(true)
@@ -104,12 +137,10 @@ export default function FloatingCart() {
     const touch = e.touches[0]
     let newX = touch.clientX - dragOffset.x
     let newY = touch.clientY - dragOffset.y
-
     const maxX = window.innerWidth - 80
     const maxY = window.innerHeight - 80
     newX = Math.max(0, Math.min(newX, maxX))
     newY = Math.max(0, Math.min(newY, maxY))
-
     setPosition({ x: newX, y: newY })
   }
 
@@ -117,8 +148,8 @@ export default function FloatingCart() {
     setIsDragging(false)
   }
 
-  // If cart is empty, don't render anything
-  if (totalItems === 0) {
+  // ===== DON'T RENDER IF HIDDEN OR EMPTY =====
+  if (totalItems === 0 || isHidden) {
     return null
   }
 
@@ -147,10 +178,8 @@ export default function FloatingCart() {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Drag handle indicator */}
       <div className="drag-handle">⋮⋮</div>
 
-      {/* Cart Toggle Button */}
       <button
         className="cart-toggle"
         onClick={() => setIsOpen(!isOpen)}
@@ -161,7 +190,6 @@ export default function FloatingCart() {
         <span className="cart-arrow">{isOpen ? '▲' : '▼'}</span>
       </button>
 
-      {/* Cart Dropdown */}
       {isOpen && (
         <div className="cart-content">
           <div className="cart-header">
@@ -213,8 +241,10 @@ export default function FloatingCart() {
               <span>Total:</span>
               <span className="cart-total-price">{formatPrice(totalPrice)}</span>
             </div>
-            <Link href="/checkout" className="cart-checkout-btn"
-            onClick={() => setIsOpen(false)}
+            <Link 
+              href="/checkout" 
+              className="cart-checkout-btn"
+              onClick={handleCheckout}
             >
               Checkout →
             </Link>
@@ -224,6 +254,5 @@ export default function FloatingCart() {
     </div>
   )
 
-  // Use portal to render outside the normal DOM flow
   return isMounted ? createPortal(cartContent, document.body) : null
 }
