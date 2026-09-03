@@ -7,6 +7,7 @@ import { useCart } from '@/context/CartContext'
 import ProductCard from '@/components/ProductCard'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
+import Spinner from '@/components/Spinner'
 
 export default function ProductPage() {
   const params = useParams()
@@ -61,7 +62,7 @@ export default function ProductPage() {
   if (loading) {
     return (
       <main className="container product-page">
-        <p><Spinner /></p>
+        <Spinner />
       </main>
     )
   }
